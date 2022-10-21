@@ -7,11 +7,11 @@ import logging
 import re
 
 class Diranalyzer:
-    def __init__(self, dirlist, afile, outputfile = "results.csv"):
+    def __init__(self, dirlist, afile, outputfile = "results.csv", baseshare = ""):
         self.logger = logging.getLogger("DIRANALYZER")
 
         self.outputfile=outputfile
-
+        self.baseshare = baseshare
         self.BaseLevels = []
         self.ShareLevels = {}
 
@@ -19,29 +19,26 @@ class Diranalyzer:
             lines = [line.rstrip() for line in f]
 
         for line in lines:
+
+            if line is "":
+                continue
+
             sharelevel = line.replace("\\","/")
             if sharelevel[-1:] != "/":
                 sharelevel +="/"
             self.BaseLevels.append(sharelevel)
-
 
         with open(dirlist,'r') as dirlistFile:
             dirlistLines = dirlistFile.readlines()
 
         for dirlistLine in dirlistLines:
             for BaseLevel in self.BaseLevels:
-                
-                regex = re.compile(re.escape(BaseLevel))
-                
-                dirlistFile = open(dirlist, "r")
-                
+                regex = re.compile(re.escape(BaseLevel))                
                 match = re.match(regex, dirlistLine.rstrip())
                 if match:
                     if "." in os.path.basename(match.string):
                         self.logger.debug("Found "+match.string)
-
                         sharelevel = match.string.replace(BaseLevel,"").split("/")[0]
-
                         if sharelevel not in self.ShareLevels:
                             self.ShareLevels[sharelevel] = ShareLevel(BaseLevel+sharelevel)
 
@@ -58,7 +55,7 @@ class Diranalyzer:
 
         f = open(self.outputfile,"w")
         for level in self.ShareLevels:
-            f.write(self.ShareLevels[level].base+","+str(len(self.ShareLevels[level].filepaths))+"\n")
+            f.write(self.baseshare+self.ShareLevels[level].base.replace("/","\\")+","+str(len(self.ShareLevels[level].filepaths))+"\n")
 
         self.logger.info("Results written to: "+self.outputfile)
 
@@ -76,6 +73,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(add_help =  True, description = "Parse dirlisting file to provide insights of permissive (department) folders based on an input file of desired levels of access.")
     parser.add_argument('-dirlist', help='[required] File that contains the dirlist (newline seperated) ', required=True)
     parser.add_argument('-afile', help='[required] File used to analyse department shares, this should be a newline seperated list of paths of which level of access is acceptable. I.e.: /Global/US/departments/', required=True)
+    parser.add_argument('-baseshare', action='store', help='Prepend this string to all results as the base of the fileshare. i.e. \\dc01\SYSVOL', default="")
     parser.add_argument('-outputfile', action='store', help='Output file to write CSV of results to.', default="results.csv")
     parser.add_argument('-debug', action='store_true', help='Turn DEBUG output ON')
     options = parser.parse_args()
@@ -100,4 +98,4 @@ if __name__ == "__main__":
         logger.error("Analysis file not found!")
         exit()
 
-    dc = Diranalyzer(options.dirlist, options.afile, options.outputfile)
+    dc = Diranalyzer(options.dirlist, options.afile, options.outputfile, options.baseshare)
