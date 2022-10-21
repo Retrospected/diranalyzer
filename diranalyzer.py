@@ -43,9 +43,9 @@ class Diranalyzer:
                 if match:
                     if "." in os.path.basename(match.string):
                         self.logger.debug("Found "+match.string)
-                        sharelevel = match.string.casefold().replace(BaseLevel.casefold(),"").split("/")[0]
+                        sharelevel = BaseLevel[:-1]+match.string.casefold().replace(BaseLevel.casefold(),"").split("/")[0]
                         if sharelevel not in self.ShareLevels:
-                            self.ShareLevels[sharelevel] = ShareLevel(BaseLevel+sharelevel)
+                            self.ShareLevels[sharelevel] = ShareLevel(sharelevel)
 
                         self.ShareLevels[sharelevel].add_filepath(match.string)
                         found_match = True
