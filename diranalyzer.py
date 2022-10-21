@@ -38,12 +38,12 @@ class Diranalyzer:
 
             found_match = False
             for BaseLevel in self.BaseLevels:
-                regex = re.compile(re.escape(BaseLevel))                
+                regex = re.compile(re.escape(BaseLevel),re.IGNORECASE)               
                 match = re.match(regex, dirlistLine.rstrip())
                 if match:
                     if "." in os.path.basename(match.string):
                         self.logger.debug("Found "+match.string)
-                        sharelevel = match.string.replace(BaseLevel,"").split("/")[0]
+                        sharelevel = match.string.casefold().replace(BaseLevel.casefold(),"").split("/")[0]
                         if sharelevel not in self.ShareLevels:
                             self.ShareLevels[sharelevel] = ShareLevel(BaseLevel+sharelevel)
 
