@@ -15,12 +15,14 @@ class Diranalyzer:
         self.BaseLevels = []
         self.ShareLevels = {}
 
+        self.noresults = []
+
         with open(afile, "r") as f:
             lines = [line.rstrip() for line in f]
 
         for line in lines:
 
-            if line is "":
+            if line == "":
                 continue
 
             sharelevel = line.replace("\\","/")
@@ -28,10 +30,13 @@ class Diranalyzer:
                 sharelevel +="/"
             self.BaseLevels.append(sharelevel)
 
-        with open(dirlist,'r') as dirlistFile:
-            dirlistLines = dirlistFile.readlines()
+        dirlistLines = open(dirlist,'r')
 
         for dirlistLine in dirlistLines:
+            if dirlistLine[:1] == ".":
+                dirlistLine = dirlistLine[1:]
+
+            found_match = False
             for BaseLevel in self.BaseLevels:
                 regex = re.compile(re.escape(BaseLevel))                
                 match = re.match(regex, dirlistLine.rstrip())
@@ -43,11 +48,17 @@ class Diranalyzer:
                             self.ShareLevels[sharelevel] = ShareLevel(BaseLevel+sharelevel)
 
                         self.ShareLevels[sharelevel].add_filepath(match.string)
+                        found_match = True
+
+            if not found_match:
+                if "." in os.path.basename(dirlistLine):
+                    self.noresults.append(dirlistLine)
 
         for level in self.ShareLevels:
             self.logger.info("Found "+str(len(self.ShareLevels[level].filepaths))+" files in path "+self.ShareLevels[level].base)
 
         self.write_results()
+        self.write_noresults()
 
     def write_results(self):
         # CSV format:
@@ -57,7 +68,16 @@ class Diranalyzer:
         for level in self.ShareLevels:
             f.write(self.baseshare+self.ShareLevels[level].base.replace("/","\\")+","+str(len(self.ShareLevels[level].filepaths))+"\n")
 
+        f.close()
         self.logger.info("Results written to: "+self.outputfile)
+
+    def write_noresults(self):
+        f = open ("no-"+self.outputfile,"w")
+        for noresult in self.noresults:
+            f.write(self.baseshare+noresult.replace("/","\\"))
+
+        f.close()
+        self.logger.info("No results written to: no-"+self.outputfile)
 
 class ShareLevel:
     def __init__(self, base):
