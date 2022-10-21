@@ -65,6 +65,7 @@ class Diranalyzer:
         # ShareLevel,countfiles
 
         f = open(self.outputfile,"w")
+        f.write("path,number of files\n")
         for level in self.ShareLevels:
             f.write(self.baseshare+self.ShareLevels[level].base.replace("/","\\")+","+str(len(self.ShareLevels[level].filepaths))+"\n")
 
@@ -73,8 +74,9 @@ class Diranalyzer:
 
     def write_noresults(self):
         f = open ("no-"+self.outputfile,"w")
+        f.write("path\n")
         for noresult in self.noresults:
-            f.write(self.baseshare+noresult.replace("/","\\"))
+            f.write(self.baseshare+noresult.replace("/","\\")+"\n")
 
         f.close()
         self.logger.info("No results written to: no-"+self.outputfile)
